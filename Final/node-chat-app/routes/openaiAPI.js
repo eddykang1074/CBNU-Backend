@@ -45,36 +45,20 @@ router.post("/dalle", async (req, res) => {
       n: 1, //이미지 생성갯수(dalle2는최대 10개,dalle3는 1개)
       size: "1024x1024", //dalle2: 256x258,512x512,1024x1024 dall3:1024x1024,1792x1024,1024x1792 지원
       style: "vivid", //기본값:vivid, natural:dalle3만지원-더자연스럽고 초현실적인 이미지생성
-      response_format: "url", //url:openai사이트에 생성된 이미지 풀주소경로반환, b64_json : 바이너리 데이터 형식으로 반환
+      response_format: "b64_json", //url:openai사이트에 생성된 이미지 풀주소경로반환, b64_json : 바이너리 데이터 형식으로 반환
     });
 
     //Step3: Dalle API 호출결과에서 물리적 이미지 생성/서버공간에 저장하기
-    //url방식으로 이미지생성값을 반환받는경우는 최대 1시간 이후에 openai이미지 서버에서 해당 이미지 삭제됨
-    //해당 이미지가 영구적으로 필요하면 반환된 url주소를 이용해 이미지를 백엔드에 생성하시면 됩니다.
-    const imageURL = response.data[0].url;
-    console.log("dall 이미지 생성 URL경로 : ", imageURL);
-
     //이미지 경로를 이용해 물리적 이미지 파일 생성하기
     const imgFileName = `sample-${Date.now()}.png`;
     const imgFilePath = `./public/ai/${imgFileName}`;
 
-    axios({
-      url: imageURL,
-      responseType: "stream",
-    })
-      .then((response) => {
-        response.data
-          .pipe(fs.createWriteStream(imgFilePath))
-          .on("finish", () => {
-            console.log("Image saved successfully.");
-          })
-          .on("error", (err) => {
-            console.error("Error saving image:", err);
-          });
-      })
-      .catch((err) => {
-        console.error("Error downloading image:", err);
-      });
+    //이미지생성요청에 대한 응답값으로 이미지 바이너리 데이터로 반환후 서버에 이미지 파일 생성하기
+    const imageBinaryData = response.data[0].b64_json;
+    console.log("이미지 바이너리 데이터정보:", imageBinaryData);
+
+    const buffer = Buffer.from(imageBinaryData, "base64");
+    fs.writeFileSync(imgFilePath, buffer);
 
     //Step4: 최종 생성된 이미지 데이터 추출하기
     const article = {

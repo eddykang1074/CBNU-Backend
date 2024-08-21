@@ -135,6 +135,7 @@ module.exports = (server) => {
           },
         }
       );
+
       //Step3: ChatGpt 응답메시지 반환받기
       const gptMessage = response.data.choices[0].message.content;
       //Step4) 프론트엔드 소켓으로 GPT응답메시지 데이터 전송하기
